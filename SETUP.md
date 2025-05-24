@@ -85,7 +85,7 @@ Description=Yamaha R3 Data Acquisition
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /home/pi/yamaha-r3-dashboard/services/data_acquisition.py
+ExecStart=/usr/bin/python3 /home/pi/yamaha-r3-dashboard/data_acquisition.py
 Restart=always
 User=pi
 
@@ -101,7 +101,7 @@ Description=Yamaha R3 GUI Display
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /home/pi/yamaha-r3-dashboard/services/display_gui.py
+ExecStart=/usr/bin/python3 /home/pi/yamaha-r3-dashboard/display_gui.py
 Restart=always
 User=pi
 

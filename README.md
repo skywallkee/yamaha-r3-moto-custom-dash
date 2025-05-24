@@ -125,13 +125,13 @@ cd yamaha-r3-dashboard
 #### Start Data Acquisition:
 
 ```bash
-python3 services/data_acquisition.py
+python3 data_acquisition.py
 ```
 
 #### Start GUI Display:
 
 ```bash
-python3 services/display_gui.py
+python3 display_gui.py
 ```
 
 Optional: Use `systemd` to autostart both services on boot.
