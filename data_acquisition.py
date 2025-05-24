@@ -3,6 +3,7 @@ from sensors.can_reader import CANReader
 from sensors.imu_reader import IMUReader
 from sensors.gps_reader import GPSReader
 from config import CONFIG
+from storage import sqlite_logger
 
 class DataAcquisition:
     def __init__(self):
@@ -40,12 +41,31 @@ class DataAcquisition:
             self.data['gps'] = self.gps_reader.get_gps_data()
             await asyncio.sleep(interval)
 
+    async def _log_loop(self, interval=1.0):
+        while not self._stop_event.is_set():
+            can = self.data['can']
+            imu = self.data['imu']
+            # Log only if we have meaningful data
+            if all(k in can for k in ('rpm', 'speed', 'gear')) and 'lean_angle' in imu:
+                await asyncio.to_thread(
+                    sqlite_logger.log_sensor_data,
+                    can.get('rpm'),
+                    can.get('speed'),
+                    can.get('gear'),
+                    imu.get('lean_angle')
+                )
+            gps = self.data['gps']
+            # Optionally log GPS points if you have a lap_id (add logic as needed)
+            # await asyncio.to_thread(sqlite_logger.log_gps_point, lap_id, timestamp, gps.get('lat'), gps.get('lon'))
+            await asyncio.sleep(interval)
+
     async def start(self):
         self._stop_event.clear()
         await asyncio.gather(
             self._can_loop(),
             self._imu_loop(),
-            self._gps_loop()
+            self._gps_loop(),
+            self._log_loop()
         )
 
     def stop(self):
