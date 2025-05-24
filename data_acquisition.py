@@ -43,6 +43,9 @@ class DataAcquisition:
 
     async def _log_loop(self, interval=1.0):
         while not self._stop_event.is_set():
+            if not CONFIG.get("logging_enabled", True):
+                await asyncio.sleep(interval)
+                continue
             can = self.data['can']
             imu = self.data['imu']
             # Log only if we have meaningful data

@@ -14,4 +14,7 @@ CONFIG = {
     # GPS settings
     "gps_device": "/dev/serial0",
     "gps_poll_interval_ms": 1000,
+
+    # Logging settings
+    "logging_enabled": True,
 }
