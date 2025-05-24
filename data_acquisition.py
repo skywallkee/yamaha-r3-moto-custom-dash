@@ -2,12 +2,19 @@ import asyncio
 from sensors.can_reader import CANReader
 from sensors.imu_reader import IMUReader
 from sensors.gps_reader import GPSReader
+from config import CONFIG
 
 class DataAcquisition:
     def __init__(self):
-        self.can_reader = CANReader()
-        self.imu_reader = IMUReader()
-        self.gps_reader = GPSReader()
+        self.can_reader = CANReader(
+            channel=CONFIG["can_interface"],
+            bitrate=CONFIG["can_bitrate"],
+            rpm_id=CONFIG["can_rpm_id"],
+            speed_id=CONFIG["can_speed_id"],
+            gear_id=CONFIG["can_gear_id"]
+        )
+        self.imu_reader = IMUReader(address=CONFIG["mpu_address"])
+        self.gps_reader = GPSReader(device=CONFIG["gps_device"])
         self.data = {
             'can': {},
             'imu': {},
@@ -15,17 +22,20 @@ class DataAcquisition:
         }
         self._stop_event = asyncio.Event()
 
-    async def _can_loop(self, interval=0.1):
+    async def _can_loop(self, interval=None):
+        interval = interval or CONFIG["can_poll_interval_ms"] / 1000.0
         while not self._stop_event.is_set():
-            self.data['can'] = self.can_reader.read_can_data(timeout=0.05)
+            self.data['can'] = self.can_reader.read_can_data(timeout=interval/2)
             await asyncio.sleep(interval)
 
-    async def _imu_loop(self, interval=0.1):
+    async def _imu_loop(self, interval=None):
+        interval = interval or CONFIG["imu_poll_interval_ms"] / 1000.0
         while not self._stop_event.is_set():
             self.data['imu'] = self.imu_reader.get_all_data()
             await asyncio.sleep(interval)
 
-    async def _gps_loop(self, interval=0.5):
+    async def _gps_loop(self, interval=None):
+        interval = interval or CONFIG["gps_poll_interval_ms"] / 1000.0
         while not self._stop_event.is_set():
             self.data['gps'] = self.gps_reader.get_gps_data()
             await asyncio.sleep(interval)
