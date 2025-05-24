@@ -2,16 +2,16 @@ import can
 from typing import Dict, Optional
 
 class CANReader:
-    def __init__(self, channel: str = 'can0', bustype: str = 'socketcan', bitrate: int = 500000):
+    def __init__(self, channel: str = 'can0', bustype: str = 'socketcan', bitrate: int = 500000,
+                 rpm_id: int = 0x100, speed_id: int = 0x101, gear_id: int = 0x102):
         """
-        Initialize CAN bus interface. Update 'bustype' and 'channel' as needed for your setup.
-        For MCP2515 on Raspberry Pi, use bustype='socketcan' and channel='can0' (after setting up with slcand or can0 overlay).
+        Initialize CAN bus interface. Default values provided, can be overridden on init.
+        CAN IDs can be passed as arguments.
         """
         self.bus = can.interface.Bus(channel=channel, bustype=bustype, bitrate=bitrate)
-        # Placeholder CAN IDs for Yamaha R3 2023. Update with actual IDs and parsing as needed.
-        self.RPM_CAN_ID = 0x100  # Example CAN ID for RPM
-        self.SPEED_CAN_ID = 0x101  # Example CAN ID for Speed
-        self.GEAR_CAN_ID = 0x102  # Example CAN ID for Gear
+        self.RPM_CAN_ID = rpm_id
+        self.SPEED_CAN_ID = speed_id
+        self.GEAR_CAN_ID = gear_id
 
     def read_can_data(self, timeout: float = 1.0) -> Dict[str, Optional[int]]:
         """

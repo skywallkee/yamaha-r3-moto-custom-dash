@@ -6,7 +6,8 @@ class GPSReader:
     """
     Generic GPS reader for Raspberry Pi. Uses 'gpsd' via the 'gps' library if available, but can be extended for other modules.
     """
-    def __init__(self):
+    def __init__(self, device: str = '/dev/serial0'):
+        self.device = device
         try:
             import gps
             self.gps = gps
