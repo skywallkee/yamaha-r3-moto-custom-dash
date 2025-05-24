@@ -1,0 +1,61 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# SQLite database files
+*.sqlite3
+*.db
+*.sqlite
+
+# Logs and runtime files
+*.log
+*.pid
+*.sock
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# OS-generated
+ehthumbs.db
+Icon?
+Desktop.ini
+
+# VS Code
+.vscode/
+
+# JetBrains IDEs
+.idea/
+
+# Python installer
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Output and test data
+/data/
+*.csv
+*.json
+
+# Test results
+*.out
+*.test
+
+# Camera capture temp files
+capture_*.jpg
+capture_*.mp4
+
+# Backup or swap files
+*~
+*.swp
+*.bak
+*.tmp
