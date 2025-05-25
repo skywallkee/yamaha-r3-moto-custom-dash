@@ -131,7 +131,11 @@ class DataAcquisition:
                 msg = json.dumps({
                     "rpm": self.data['can'].get('rpm', 0),
                     "speed": self.data['can'].get('speed', 0),
-                    "gear": self.data['can'].get('gear', 1)
+                    "gear": self.data['can'].get('gear', 1),
+                    "lean_angle": self.data['imu'].get('lean_angle', 0.0),
+                    "gps_lat": self.data['gps'].get('lat'),
+                    "gps_lon": self.data['gps'].get('lon'),
+                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
                 })
                 try:
                     # Always create a new socket for each sendto
