@@ -7,6 +7,7 @@ import socket
 import json
 import threading
 import os
+import time
 
 pygame.init()
 screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
@@ -39,7 +40,6 @@ def socket_listener():
         try:
             data, _ = sock.recvfrom(1024)
             msg = json.loads(data.decode())
-            # Update only if keys exist
             for k in ("rpm", "speed", "gear", "lean_angle", "gps_lat", "gps_lon", "timestamp"):
                 if k in msg:
                     live_data[k] = msg[k]
@@ -79,4 +79,11 @@ while running:
     pygame.display.flip()
     clock.tick(target_fps)
 
+# Cleanup on exit
+try:
+    sock.close()
+    if os.path.exists(SOCKET_PATH):
+        os.remove(SOCKET_PATH)
+except Exception:
+    pass
 pygame.quit()

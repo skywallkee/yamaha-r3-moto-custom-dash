@@ -138,7 +138,6 @@ class DataAcquisition:
                     "timestamp": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
                 })
                 try:
-                    # Always create a new socket for each sendto
                     with socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as s:
                         s.connect(self.socket_path)
                         s.send(msg.encode())
