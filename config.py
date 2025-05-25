@@ -19,4 +19,7 @@ CONFIG = {
 
     # Logging settings
     "logging_enabled": True,
+
+    # Debug settings
+    "debug_socket_enabled": False,  # Enable/disable sending to dashboard_debug.sock
 }

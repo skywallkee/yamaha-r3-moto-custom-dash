@@ -19,7 +19,7 @@ class MockCANReader:
         self.last_update = time.time()
         self.next_update = self.last_update + random.uniform(0.1, 1.0)
 
-    def read_can_data(self, timeout=1.0):
+    def read_can_data(self, timeout=0.1):
         now = time.time()
         if now >= self.next_update:
             # RPM oscillates between 4000 and 12000
@@ -82,7 +82,6 @@ class DataAcquisition:
             'imu': {},
             'gps': {}
         }
-        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         self.socket_path = "/tmp/dashboard.sock"
         self._stop_event = asyncio.Event()
 
@@ -126,6 +125,7 @@ class DataAcquisition:
             await asyncio.sleep(interval)
 
     async def _broadcast_loop(self, interval=0.1):
+        # Send data to the forwarder (which binds to /tmp/dashboard.sock)
         while not self._stop_event.is_set():
             try:
                 msg = json.dumps({
@@ -133,19 +133,68 @@ class DataAcquisition:
                     "speed": self.data['can'].get('speed', 0),
                     "gear": self.data['can'].get('gear', 1)
                 })
-                self.sock.sendto(msg.encode(), self.socket_path)
-            except Exception:
-                pass
+                try:
+                    # Always create a new socket for each sendto
+                    with socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as s:
+                        s.connect(self.socket_path)
+                        s.send(msg.encode())
+                except Exception as e:
+                    print(f"Failed to send to dashboard.sock: {e}")
+            except Exception as e:
+                print(f"Failed to broadcast data: {e}")
             await asyncio.sleep(interval)
+
+    async def _forwarder_loop(self, interval=0.1):
+        """
+        Forward all messages received on /tmp/dashboard.sock to /tmp/dashboard_display.sock and /tmp/dashboard_debug.sock (if enabled).
+        Only send to a destination if its socket file exists.
+        """
+        SRC = "/tmp/dashboard.sock"
+        DESTS = ["/tmp/dashboard_display.sock"]
+        if CONFIG.get("debug_socket_enabled", True):
+            DESTS.append("/tmp/dashboard_debug.sock")
+        import os
+        if os.path.exists(SRC):
+            os.remove(SRC)
+        src_sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        try:
+            src_sock.bind(SRC)
+        except OSError:
+            os.remove(SRC)
+            src_sock.bind(SRC)
+        src_sock.setblocking(True)  # Blocking mode for thread executor
+        print(f"Forwarder running: {SRC} -> {DESTS}")
+        loop = asyncio.get_running_loop()
+        while not self._stop_event.is_set():
+            try:
+                # Use run_in_executor to avoid blocking the event loop
+                data, addr = await loop.run_in_executor(None, src_sock.recvfrom, 1024)
+                for dest in DESTS:
+                    if os.path.exists(dest):
+                        try:
+                            with socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as out:
+                                out.connect(dest)
+                                out.send(data)
+                        except Exception as e:
+                            print(f"Forwarder failed to send to {dest}: {e}")
+                    else:
+                        print(f"Forwarder: destination socket {dest} does not exist, skipping.")
+            except Exception as e:
+                print(f"Forwarder error: {e}")
 
     async def start(self):
         self._stop_event.clear()
+        # Start the forwarder loop first to ensure /tmp/dashboard.sock is bound
+        forwarder_task = asyncio.create_task(self._forwarder_loop())
+        # Wait a short moment to ensure the forwarder is ready
+        await asyncio.sleep(0.2)
         await asyncio.gather(
             self._can_loop(),
             self._imu_loop(),
             self._gps_loop(),
             self._log_loop(),
-            self._broadcast_loop()  # Add broadcast loop
+            self._broadcast_loop(),
+            forwarder_task
         )
 
     def stop(self):

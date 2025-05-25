@@ -17,7 +17,7 @@ show_fps = CONFIG.get("show_fps", True)
 target_fps = CONFIG.get("display_fps", 60)
 
 # Set up Unix socket for receiving data
-SOCKET_PATH = "/tmp/dashboard.sock"
+SOCKET_PATH = "/tmp/dashboard_display.sock"
 if os.path.exists(SOCKET_PATH):
     os.remove(SOCKET_PATH)
 
